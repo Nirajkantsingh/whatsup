@@ -4,6 +4,7 @@
   "description": "WhatsApp group bot with AI-powered responses using Claude",
   "main": "index.js",
   "scripts": {
+    "build": "npm install && npx puppeteer browsers install chrome",
     "start": "node index.js"
   },
   "dependencies": {
