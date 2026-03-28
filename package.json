@@ -4,8 +4,8 @@
   "description": "WhatsApp group bot with AI-powered responses using Claude",
   "main": "index.js",
   "scripts": {
-    "build": "npm install && npx puppeteer browsers install chrome",
-    "start": "node index.js"
+    "build": "npm install && PUPPETEER_CACHE_DIR=$(pwd)/.cache/puppeteer npx puppeteer browsers install chrome",
+    "start": "PUPPETEER_CACHE_DIR=$(pwd)/.cache/puppeteer node index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
