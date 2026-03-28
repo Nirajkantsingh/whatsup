@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-agent",
+  "version": "1.0.0",
+  "description": "WhatsApp group bot with AI-powered responses using Claude",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/genai": "^1.46.0",
+    "dotenv": "^16.4.7",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.1"
+  }
+}
