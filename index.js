@@ -2,8 +2,64 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const QRCode = require("qrcode");
 const path = require("path");
+const fs = require("fs");
 const { GoogleGenAI } = require("@google/genai");
 require("dotenv").config();
+
+// --- Find Chrome executable ---
+function findChromePath() {
+  // 1. Check common system paths first
+  const systemPaths = [
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+  ];
+  for (const p of systemPaths) {
+    if (fs.existsSync(p)) {
+      console.log(`Found system Chrome at: ${p}`);
+      return p;
+    }
+  }
+
+  // 2. Search in Puppeteer cache directories
+  const cacheDirs = [
+    process.env.PUPPETEER_CACHE_DIR,
+    path.join(__dirname, ".cache", "puppeteer"),
+    "/opt/render/project/src/.cache/puppeteer",
+    "/opt/render/.cache/puppeteer",
+    path.join(process.env.HOME || "", ".cache", "puppeteer"),
+  ].filter(Boolean);
+
+  for (const cacheDir of cacheDirs) {
+    if (!fs.existsSync(cacheDir)) continue;
+    const found = walkDir(cacheDir);
+    if (found) {
+      console.log(`Found Chrome at: ${found}`);
+      return found;
+    }
+  }
+
+  console.log("Chrome not found, letting Puppeteer auto-detect...");
+  return undefined;
+}
+
+function walkDir(dir) {
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+      if (stat.isDirectory()) {
+        const result = walkDir(fullPath);
+        if (result) return result;
+      } else if (file === "chrome" || file === "Google Chrome for Testing") {
+        return fullPath;
+      }
+    }
+  } catch (e) { /* skip inaccessible dirs */ }
+  return null;
+}
 
 // --- Configuration ---
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -27,18 +83,24 @@ const MAX_HISTORY = 50;
 const historyFetched = new Set(); // Track which groups have had history loaded
 
 // --- WhatsApp Client Setup ---
+const chromePath = findChromePath();
+const puppeteerConfig = {
+  headless: true,
+  args: [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    "--single-process",
+  ],
+};
+if (chromePath) {
+  puppeteerConfig.executablePath = chromePath;
+}
+
 const client = new Client({
   authStrategy: new LocalAuth(),
-  puppeteer: {
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--single-process",
-    ],
-  },
+  puppeteer: puppeteerConfig,
 });
 
 // Display QR code for authentication and save as image
